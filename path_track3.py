@@ -132,9 +132,9 @@ try:
         RL_encoder_diff=encoderPosR-encoderPosL
         arc_L=RL_encoder_diff*radius*2*pi/encoderNum
         head_Ang=pi/2+arc_L/17
-        if head_Ang>2*pi:
-            head_Ang=0
-        if head_Ang<0:
+        while head_Ang>2*pi:
+            head_Ang-=2*pi
+        while head_Ang<0:
             head_Ang+=2*pi
     #calculate position
         '''    

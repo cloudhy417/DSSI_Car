@@ -6,7 +6,6 @@ import socket
 import json
 import syslog,time,sys
 import RPi.GPIO as G
-port = serial.Serial("/dev/ttyS0",115200)#GPIO : ttyS0 #USB :ttyACM0
 encoderPosR_prev=0
 encoderPosL_prev=0
 encoderPosR=0
@@ -63,7 +62,6 @@ sock = socket.socket(socket.AF_INET,
 sock.bind((UDP_IP,UDP_PORT))
 time.sleep(1)
 #parameter setup
-start_flag=chr(0)
 radius=3.45
 encoderNum=374
 pwm_R = 1
@@ -92,40 +90,13 @@ print pathX
 print pathY
 try:
     while True:
-        
         data,addr = sock.recvfrom(1024)
         comma = data.index(".")
         period = data.index(",")
         print data[0:comma],"XXXXXXXXXXXXX",data[comma+1:period]
         posX = int(data[0:comma])
         posY = int(data[comma+1:period])
-        '''
-        timeoutCount=5000
-        timeout=False
-        #wait to start reading
-        while ord(start_flag)!=3 and timeoutCount>0:
-            if port.in_waiting:    
-                start_flag = port.read()
-            timeoutCount-=1
-            #print ord(start_flag)
-        if timeoutCount is 0:
-            timeout=True
-            timeoutCount=5000
-        if timeout is False:
-    #read right encoder value
-            highbyte = port.read()
-            lowbyte = port.read()
-            encoderPosR = ord(highbyte)*256+ord(lowbyte) 
-    #read left encoder value
-            highbyte = port.read()
-            lowbyte = port.read()
-            encoderPosL = ord(highbyte)*256+ord(lowbyte)
-        else:
-            encoderPosR=encoderPosR
-            encoderPosL=encoderPosL
-        '''
     #pwm algorithm
-
         encoderPosR_Inc=encoderPosR-encoderPosR_prev
         encoderPosL_Inc=encoderPosL-encoderPosL_prev
     #calculate head_Ang

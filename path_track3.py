@@ -166,6 +166,7 @@ try:
         if T>N:
             T=N
         print T
+        
     #change from go foward to go backword
     #sign of kp_Dis should change
     #sign of kp_Ang remain

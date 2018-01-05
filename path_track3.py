@@ -51,8 +51,8 @@ pwmRn.start(1)
 G.setup(pwmL_positive, G.OUT)
 pwmLp = G.PWM(pwmL_positive, 500)#freq=500Hz
 pwmLp.start(1)
-G.setup(pwmR_negative, G.OUT)
-pwmLn = G.PWM(pwmR_negative, 500)#freq=500Hz
+G.setup(pwmL_negative, G.OUT)
+pwmLn = G.PWM(pwmL_negative, 500)#freq=500Hz
 pwmLn.start(1)
 #net setup
 UDP_IP = "192.168.137.59"
@@ -78,7 +78,7 @@ ang_Dif=0
 dis_Dif=0
 foward=True
 T=0
-N=141
+
 #setup path
 for i in range(1,46):
     pathX.append(23.5+i)
@@ -88,13 +88,19 @@ for i in range(0, 46):
     pathY.append(-0.0035*math.pow((69-i-47), 3) + 157.5)
 for i in range(1,6):
     pathX.append(23.5)
+    pathY.append(200+2*i)
+for i in range(1,6):
+    pathX.append(23.5)
+    pathY.append(210-2*i)
+for i in range(1,6):
+    pathX.append(23.5)
     pathY.append(200-20*i)
-for i in range(46,0):
-    pathX.append(69-i)
-    pathY.append(-0.0035*math.pow((69-i-47), 3) + 69)
-
-#print pathX
-#print pathY
+for i in range(0,46):
+    pathX.append(69-(46-i))
+    pathY.append(-0.0035*math.pow((69-(46-i)-47), 3) + 69)
+N=len(pathX)-1
+print pathX,' ',len(pathX)
+print pathY,' ',len(pathY)
 try:
     while True:
     #receive data
@@ -123,28 +129,13 @@ try:
             
         encoder_Dist=(encoderPosR_Inc+encoderPosL_Inc)/2
         dist=encoder_Dist*radius*2*pi/encoderNum
-        posX+=dist*math.cos(head_Ang)
-        posY+=dist*math.sin(head_Ang)
-        
-    #perpendicular line
-    #y=mx+b ---> y-mx-b=0 m=dy/dx 
-        dy=pathY[T+1]-pathY[T]
-        dx=pathX[T+1]-pathX[T]
-        m=-1.0*dx/dy
-        b=pathY[T]-m*pathX[T]
-    #move to next target
-        posSide=posY-m*posX-b
-        nextPointSide=pathY[T+1]-m*pathX[T+1]-b
-        if T>90:
-            foward=False
-        if dis_Dif<5:
-            T+=3
-        if posSide*nextPointSide>0:
-            T+=3
-        if T>N:
-            T=N
-        print T
-        
+        if foward:
+            posX+=dist*math.cos(head_Ang)
+            posY+=dist*math.sin(head_Ang)
+        else:
+            posX-=dist*math.cos(head_Ang)
+            posY-=dist*math.sin(head_Ang)
+
     # error function
         x_Dif=pathX[T]-posX
         y_Dif=pathY[T]-posY    
@@ -158,6 +149,28 @@ try:
 
         print 'encL=',encoderPosL,"encR=",encoderPosR,"--------head_Ang=",head_Ang," X=",posX," Y=",posY
         print 'y_Dif=',y_Dif,'x_Dif=',x_Dif,'ang_Dif=',ang_Dif,'dis_Dif=',dis_Dif
+    #perpendicular line
+    #y=mx+b ---> y-mx-b=0 m=-dx/dy 
+        jump=2
+        if T is not N:    
+            dy=pathY[T+jump]-pathY[T]
+            dx=pathX[T+jump]-pathX[T]
+            m=-1.0*dx/dy
+            b=pathY[T]-m*pathX[T]
+    #move to next target
+            posSide=posY-m*posX-b
+            nextPointSide=pathY[T+1]-m*pathX[T+1]-b
+        if T>95:
+            foward=False
+        if dis_Dif<3:
+            T+=jump
+        if T is not N:    
+            if posSide*nextPointSide>0:
+                T+=jump
+        if T>N:
+            T=N
+        print T
+        
         
     #change from go foward to go backword
     #sign of kp_Dis and kp_Ang should change
@@ -169,12 +182,12 @@ try:
 
         #kp_DisR=sign*0.1
         #kp_DisL=sign*0.1
-        kp_AngR=sign*22
-        kp_AngL=sign*-22
+        kp_AngR=3.5
+        kp_AngL=-21.5
     # compute pwm 
         if True:
-            pwm_Control=sign*50
-            pwm_BaseSpeed=sign*65
+            pwm_Control=sign*45
+            pwm_BaseSpeed=sign*50
             pwm_R=pwm_BaseSpeed+ang_Dif*kp_AngR
             pwm_L=pwm_BaseSpeed+ang_Dif*kp_AngL
         print 'pwm_L=',pwm_L,'-----pwm_R=',pwm_R
@@ -187,7 +200,7 @@ try:
                 pwm_R=pwm_DeadZone+int(pwm_Control*(pwm_Rrate/pwm_Lrate))
         '''
     ##################
-        pwm_DeadZone=sign*30
+        pwm_DeadZone=sign*0
         if pwm_R>0:
             if pwm_R > 255:
                 pwm_R = 255
@@ -214,6 +227,9 @@ try:
                     pwm_L=0
 
     #write PWM value to GPIO 
+        if T==N:
+            pwm_R=0
+            pwm_L=0
         pwm_R=pwm_R*100.0/255
         pwm_L=pwm_L*100.0/255
         if pwm_R>0: 
@@ -230,7 +246,7 @@ try:
             pwmLp.ChangeDutyCycle(0)
         encoderPosR_prev=encoderPosR
         encoderPosL_prev=encoderPosL
-        time.sleep(0.03)
+        time.sleep(0.01)
 except KeyboardInterrupt:
         pass
 finally:

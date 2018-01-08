@@ -203,13 +203,13 @@ try:
             kp_AngR=22.2222
             kp_AngL=-33.3333
         else:
-            kp_AngR=33.3333
-            kp_AngL=-22.2222
+            kp_AngR=25.2525
+            kp_AngL=-33.3333
 
     # compute pwm 
         if True:
 
-            pwm_BaseSpeed=sign*(45.5555*math.cos(ang_Dif)+20)
+            pwm_BaseSpeed=sign*(55.5555*math.cos(ang_Dif)+10)
             pwm_R=pwm_BaseSpeed+ang_Dif*kp_AngR
             pwm_L=pwm_BaseSpeed+ang_Dif*kp_AngL
         print 'pwm_L=',pwm_L,'-----pwm_R=',pwm_R

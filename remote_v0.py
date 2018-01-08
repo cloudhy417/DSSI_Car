@@ -80,6 +80,9 @@ dis_Dif=0
 foward=True
 T=0
 N=141
+sumX = 0
+sumY = 0
+
 #setup path
 '''
 for i in range(1,46):
@@ -160,13 +163,23 @@ try:
             conn.close()
 
         while 1:
+
             c = 0
             conn, addr = s.accept()
             print 'Connect with ' +addr[0]+':'+str(addr[1])
             print '\n'
+            sumY = (sumY + 1.2 * input_y) / 2.2
 
-            pwm_R=(input_y-100 - 0.4*(input_x-100) )*0.5
-            pwm_L=(input_y-100 + 0.4*(input_x-100) )*0.5
+
+            if(sumY >= 100):
+                pwm_R=( (sumY-100) - 0.4*(input_x-100) )*0.6
+                pwm_L=( (sumY-100) + 0.4*(input_x-100) )*0.6
+            else:
+                pwm_R=( (sumY-100) + 0.4*(input_x-100) )*0.6
+                pwm_L=( (sumY-100) - 0.4*(input_x-100) )*0.6
+            
+
+
             if(pwm_R > 99):
                 pwm_R = 99
             if(pwm_L > 99):
@@ -175,6 +188,12 @@ try:
                 pwm_R = -99
             if(pwm_L < -99):
                 pwm_L = -99
+
+            
+            if(abs(pwm_L) < 5):
+                pwm_L = 0
+            if(abs(pwm_R) < 5):
+                pwm_R = 0
 
             if pwm_R>0: 
                 pwmRp.ChangeDutyCycle(pwm_R)

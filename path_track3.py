@@ -6,6 +6,10 @@ import socket
 import json
 import syslog,time,sys
 import RPi.GPIO as G
+from time import strftime
+from time import localtime
+import sys
+import os
 encoderPosR_prev=0
 encoderPosL_prev=0
 encoderPosR=0
@@ -117,6 +121,10 @@ for i in range(1,15):
 N=len(pathX)-1
 #print pathX,' ',len(pathX)
 #print pathY,' ',len(pathY)
+#generate output file name
+date = strftime('%Y%m%d_%H%M%S', localtime())
+output_name = 'output' + date + '.txt'
+f = open(output_name, 'w')
 try:
     while True:
     #receive data
@@ -161,13 +169,13 @@ try:
             m=-1.0*dx/dy
             b=pathY[T]-m*pathX[T]
     #move to next target
-            posSide=posY-m*posX-b
-            nextPointSide=pathY[T+1]-m*pathX[T+1]-b
         if T>=middle:
             foward=False
         if dis_Dif<3:
             T+=jump
-        if T is not N:    
+        elif T is not N:    
+            posSide=posY-m*posX-b
+            nextPointSide=pathY[T+1]-m*pathX[T+1]-b
             if posSide*nextPointSide>0:
                 T+=jump
         if T==N:
@@ -191,7 +199,7 @@ try:
         #print 'posX=',posX,'posY=',posY,'  ','posXR=',posXR,'posYR=',posYR
     #change from go foward to go backword
     #sign of kp_Dis and kp_Ang should change
-
+        f.write('(' + str(posX) + ', ' + str(posY) + ')\n')
         if foward:
             sign=1
         else:
@@ -277,3 +285,13 @@ finally:
         pwmLp.stop()
         pwmLn.stop()  
         G.cleanup()
+        f.close()
+        g = open(output_name, 'r')
+        print(g.read())
+        checkIfSave = str(raw_input('Do you want to save the recorded file?'))
+
+        if ((checkIfSave == 'Y') | (checkIfSave == 'y') | (checkIfSave == '1')):
+            print('saved')
+        else:
+            os.remove(output_name)
+            print('deleted')

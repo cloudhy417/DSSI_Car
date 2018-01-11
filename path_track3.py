@@ -56,7 +56,7 @@ G.setup(pwmL_negative, G.OUT)
 pwmLn = G.PWM(pwmL_negative, 500)#freq=500Hz
 pwmLn.start(1)
 #net setup
-UDP_IP = "192.168.137.138"
+UDP_IP = "192.168.137.149"
 UDP_PORT = 5005
 sock = socket.socket(socket.AF_INET,
                      socket.SOCK_DGRAM)
@@ -101,22 +101,22 @@ for i in range(0,6):
     pathX.append(30)
     pathY.append(180 + 5*i)
 middle=len(pathX)
-print middle
-for i in range(0,16):
+#print middle
+for i in range(0,18):
     pathX.append(23.5)
     pathY.append(205 - 7.6*i)
 	
 for i in range(0,45):
     pathX.append(25 + i)
-    pathY.append(-0.001 * math.pow((25 + i - 47),3) - 0.5 * (25 + i - 47) + 69)
+    pathY.append(-0.001 * math.pow((25 + i - 47),3) - 0.5 * (25 + i - 47) + 50)
 	
-for i in range(1,17):
+for i in range(1,15):
     pathX.append(69)
-    pathY.append(69 - 4.6*i)
+    pathY.append(50 - 4.6*i)
 	
 N=len(pathX)-1
-print pathX,' ',len(pathX)
-print pathY,' ',len(pathY)
+#print pathX,' ',len(pathX)
+#print pathY,' ',len(pathY)
 try:
     while True:
     #receive data
@@ -125,8 +125,8 @@ try:
         comma = data.index(".")
         period = data.index(",")
         print data[0:comma],"XXXXXXXXXXXXX",data[comma+1:period]
-        #posX = int(data[0:comma])
-        #posY = int(data[comma+1:period])
+        posX = int(data[0:comma])
+        posY = int(data[comma+1:period])
         '''
     #pwm algorithm
         encoderPosR_Inc=encoderPosR-encoderPosR_prev
@@ -188,7 +188,7 @@ try:
         #print 'encL=',encoderPosL,"encR=",encoderPosR,"--------head_Ang=",head_Ang," X=",posX," Y=",posY
         #print 'y_Dif=',y_Dif,'x_Dif=',x_Dif,'ang_Dif=',ang_Dif,'dis_Dif=',dis_Dif
         
-        
+        #print 'posX=',posX,'posY=',posY,'  ','posXR=',posXR,'posYR=',posYR
     #change from go foward to go backword
     #sign of kp_Dis and kp_Ang should change
 
@@ -203,13 +203,13 @@ try:
             kp_AngR=22.2222
             kp_AngL=-33.3333
         else:
-            kp_AngR=25.2525
-            kp_AngL=-33.3333
+            kp_AngR=33.3333
+            kp_AngL=-22.2222
 
     # compute pwm 
         if True:
 
-            pwm_BaseSpeed=sign*(55.5555*math.cos(ang_Dif)+10)
+            pwm_BaseSpeed=sign*(55.5555*math.cos(ang_Dif))
             pwm_R=pwm_BaseSpeed+ang_Dif*kp_AngR
             pwm_L=pwm_BaseSpeed+ang_Dif*kp_AngL
         print 'pwm_L=',pwm_L,'-----pwm_R=',pwm_R
@@ -263,8 +263,8 @@ try:
         if pwm_L>0:    
             pwmLp.ChangeDutyCycle(pwm_L)
             pwmLn.ChangeDutyCycle(0)
-        else:    
-            pwmLn.ChangeDutyCycle(-1*pwm_L)
+        else:
+            pwmLn.ChangeDutyCycle(-1*pwm_L)  
             pwmLp.ChangeDutyCycle(0)
         encoderPosR_prev=encoderPosR
         encoderPosL_prev=encoderPosL

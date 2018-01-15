@@ -8,6 +8,9 @@ import syslog,time,sys
 import RPi.GPIO as G
 from thread import *
 
+
+
+
 encoderPosR_prev=0
 encoderPosL_prev=0
 encoderPosR=0
@@ -16,6 +19,7 @@ right_A=11
 right_B=12
 left_A=15
 left_B=16
+motor_pin = 33
 #interrupt function
 G.setmode(G.BOARD)
 G.setup(right_B,G.IN,pull_up_down=G.PUD_UP)
@@ -56,6 +60,7 @@ pwmLp.start(1)
 G.setup(pwmL_negative, G.OUT)
 pwmLn = G.PWM(pwmL_negative, 500)#freq=500Hz
 pwmLn.start(1)
+G.setup(motor_pin, G.OUT)
 #net setup
 UDP_IP = "192.168.137.59"
 UDP_PORT = 5005
@@ -118,8 +123,10 @@ try:
         c = 0
         global input_x
         global input_y
+        global motor
         input_x=0
         input_y=0
+        motor = 0
         print 'Socket created'
 
         #try:
@@ -144,6 +151,8 @@ try:
                     if c==0:
                         print 'motor'
                         print ord(cmd[i])
+                        global motor
+                        motor = ord(cmd[i])
                     elif c==1:
                         print 'x'
                         print ord(cmd[i])
@@ -168,15 +177,15 @@ try:
             conn, addr = s.accept()
             print 'Connect with ' +addr[0]+':'+str(addr[1])
             print '\n'
-            sumY = (sumY + 1.2 * input_y) / 2.2
-
+            #sumY = (sumY + 0.8 * input_y) / 1.8
+            sumY = input_y
 
             if(sumY >= 100):
-                pwm_R=( (sumY-100) - 0.4*(input_x-100) )*0.6
-                pwm_L=( (sumY-100) + 0.4*(input_x-100) )*0.6
+                pwm_R=( (sumY-100) - 0.5*(input_x-100) )*0.8
+                pwm_L=( (sumY-100) + 0.5*(input_x-100) )*0.8
             else:
-                pwm_R=( (sumY-100) + 0.4*(input_x-100) )*0.6
-                pwm_L=( (sumY-100) - 0.4*(input_x-100) )*0.6
+                pwm_R=( (sumY-100) + 0.5*(input_x-100) )*0.8
+                pwm_L=( (sumY-100) - 0.5*(input_x-100) )*0.8
             
 
 
@@ -188,6 +197,11 @@ try:
                 pwm_R = -99
             if(pwm_L < -99):
                 pwm_L = -99
+
+            if(motor > 100):
+                G.output(motor_pin, 1)
+            else:
+                G.output(motor_pin, 0)
 
             
             if(abs(pwm_L) < 5):

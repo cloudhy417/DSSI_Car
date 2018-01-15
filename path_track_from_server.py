@@ -64,7 +64,7 @@ UDP_IP = "192.168.137.249"
 UDP_PORT = 5005
 sock = socket.socket(socket.AF_INET,
                      socket.SOCK_DGRAM)
-#sock.bind((UDP_IP,UDP_PORT))
+sock.bind((UDP_IP,UDP_PORT))
 time.sleep(1)
 #parameter setup
 radius=3.45
@@ -99,16 +99,16 @@ for i in range(0,6):
 	
 for i in range(0,45):
     pathX.append(69 - i)
-    pathY.append(-0.001 * math.pow((69 - i - 52),3) - 0.5 * (69 - i - 52) + 157.5)
+    pathY.append(-0.001 * math.pow((69 - i - 52),3) - 0.5 * (69 - i - 47) + 157.5)
 
 for i in range(0,6):
     pathX.append(30)
-    pathY.append(180 + 3.5*i)
+    pathY.append(180 + 5*i)
 middle=len(pathX)
 #print middle
 for i in range(0,18):
-    pathX.append(30)
-    pathY.append(200 - 7.33*i)
+    pathX.append(23.5)
+    pathY.append(205 - 7.6*i)
 	
 for i in range(0,45):
     pathX.append(25 + i)
@@ -128,7 +128,7 @@ f = open(output_name, 'w')
 try:
     while True:
     #receive data
-        '''
+        
         data,addr = sock.recvfrom(1024)
         comma = data.index(".")
         period = data.index(",")
@@ -136,7 +136,7 @@ try:
         posXR = int(data[0:comma])
         posYR = int(data[comma+1:period]) 
         f.write( str(posXR) + ', ' + str(posYR) + ', ')
-        '''
+        
     #pwm algorithm
         encoderPosR_Inc=encoderPosR-encoderPosR_prev
         encoderPosL_Inc=encoderPosL-encoderPosL_prev
@@ -182,10 +182,10 @@ try:
         if T==N:
             T=N
             stop=True
-        #print T
+        print T
     # error function
-        x_Dif=pathX[T]-posX
-        y_Dif=pathY[T]-posY    
+        x_Dif=pathX[T]-posXR
+        y_Dif=pathY[T]-posYR 
         target_Ang=math.atan2(y_Dif,x_Dif)
         ang_Dif=target_Ang-head_Ang
         if ang_Dif>pi:
@@ -209,7 +209,7 @@ try:
         #kp_DisR=sign*0.1
         #kp_DisL=sign*0.1
         if foward:
-            kp_AngR=28.2828
+            kp_AngR=22.2222
             kp_AngL=-33.3333
         else:
             kp_AngR=33.3333
@@ -218,10 +218,10 @@ try:
     # compute pwm 
         if True:
 
-            pwm_BaseSpeed=sign*(55.5555*math.cos(ang_Dif))
+            pwm_BaseSpeed=sign*(66.6666*math.cos(ang_Dif))
             pwm_R=pwm_BaseSpeed+ang_Dif*kp_AngR
             pwm_L=pwm_BaseSpeed+ang_Dif*kp_AngL
-        #print 'pwm_L=',pwm_L,'-----pwm_R=',pwm_R
+        print 'pwm_L=',pwm_L,'-----pwm_R=',pwm_R
         ''' 
             if pwm_Rrate>pwm_Lrate:
                 pwm_R=pwm_DeadZone+pwm_Control
@@ -277,7 +277,7 @@ try:
             pwmLp.ChangeDutyCycle(0)
         encoderPosR_prev=encoderPosR
         encoderPosL_prev=encoderPosL
-        time.sleep(0.01)
+        time.sleep(0.04)
 except KeyboardInterrupt:
         pass
 finally:

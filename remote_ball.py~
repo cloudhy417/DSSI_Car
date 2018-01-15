@@ -1,0 +1,201 @@
+import serial
+import time
+import math
+from datetime import datetime
+import socket
+import json
+import syslog,time,sys
+import RPi.GPIO as G
+from thread import *
+import threading
+import multiprocessing
+
+
+G.setmode(G.BOARD)
+
+#pwm output setup
+pwm_switch = 38
+pwm_split = 40
+pwm_shoot = 35
+pwm_release = 37
+global split_last
+global shoot_last
+global release_last
+global split
+global shoot
+global release
+global split_state
+global shoot_state
+
+split_last = 0
+shoot_last = 0
+split = 0
+shoot = 0
+split_state = 0
+shoot_state = 0
+
+G.setup(pwm_switch, G.OUT)
+pwmswitch = G.PWM(pwm_switch, 50)#freq=50Hz
+pwmswitch.start(1)
+G.setup(pwm_split, G.OUT)
+pwmsplit = G.PWM(pwm_split, 50)#freq=50Hz
+pwmsplit.start(1)
+G.setup(pwm_shoot, G.OUT)
+pwmshoot = G.PWM(pwm_shoot, 50)#freq=50Hz
+pwmshoot.start(1)
+G.setup(pwm_release, G.OUT)
+pwmrelease = G.PWM(pwm_release, 50)#freq=50Hz
+pwmrelease.start(1)
+
+
+#net setup
+#UDP_IP = "192.168.137.59"
+UDP_PORT = 5487
+sock = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+#sock.bind((UDP_IP,UDP_PORT))
+time.sleep(1)
+
+def	work_split():
+    global split_state
+    while(1):
+        if split_state == 0:
+            pwmswitch.ChangeDutyCycle(6)
+            pwmsplit.ChangeDutyCycle(7.5)
+        elif split_state == 1:
+            pwmswitch.ChangeDutyCycle(5)
+            time.sleep(0.8) 
+            pwmswitch.ChangeDutyCycle(6)
+            time.sleep(0.8)
+            pwmsplit.ChangeDutyCycle(5)
+            time.sleep(0.8)
+            pwmsplit.ChangeDutyCycle(6.5)
+            time.sleep(0.8)
+            
+        elif split_state == 2:
+            pwmswitch.ChangeDutyCycle(8)
+            time.sleep(0.8) 
+            pwmswitch.ChangeDutyCycle(6)
+            time.sleep(0.8)
+            pwmsplit.ChangeDutyCycle(8)
+            time.sleep(0.8)
+            pwmsplit.ChangeDutyCycle(6.5)
+            time.sleep(0.8)
+            
+    
+        print ('thread=' + str(split_state))
+
+
+def	work_shoot():
+    global shoot_state
+    '''
+    while(1):
+        if shoot_state == 0:
+            pwmrelease.ChangeDutyCycle(7.5)
+        elif split_state == 1:
+            pwmrelease.ChangeDutyCycle(13) 
+        elif split_state == 2:
+            pwmshoot.ChangeDutyCycle(90)
+        time.sleep(0.05)
+    '''
+
+
+
+def clientthread(conn,c):
+    global split
+    global split_last
+    global split_state
+
+    global shoot
+    global shoot_last
+    conn.send('Welcome to the server. Receiving Data...\n')
+
+    split_last = split
+    shoot_last = shoot
+
+    while True:
+        data = conn.recv(1024)
+        cmd = list(data)
+        reply = 'Message Recerived at the server!\n'
+        for i in range (0,len(data)):
+            if c==0:
+                print 'y'
+                print ord(cmd[i])
+            elif c==1:
+                print 'split'
+                print ord(cmd[i])
+                split=ord(cmd[i])
+            elif c==2:
+                print 'shoot'
+                print ord(cmd[i])
+                shoot=ord(cmd[i])
+            c+=1
+        if not data:
+            break
+    conn.close()
+
+
+
+#main
+try:
+    p1 = threading.Thread(target = work_split)
+    p2 = threading.Thread(target = work_shoot)
+    
+    p1.setDaemon(True)
+    p2.setDaemon(True)
+    
+    
+
+    p1.start()
+    p2.start()
+    
+    
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    
+    while True:
+        #receive data
+
+        HOST_phone = ''
+        PORT_phone = 5487
+        
+        c = 0
+
+        print 'Socket created'
+        s.bind((HOST_phone,PORT_phone))
+        print 'Socket bind complete'
+        s.listen(10)
+        print 'Socket now listening'
+        while 1:
+            c = 0
+            time.sleep(0.5)
+            conn, addr = s.accept()
+            print 'Connect with ' +addr[0]+':'+str(addr[1])
+            print '\n'
+							
+            start_new_thread(clientthread,(conn,c))
+
+            if split is not split_last:
+                if split_last == 0:
+                    if ((split == 1) | (split==2)):
+                        split_state = split
+                split_last = split
+            if shoot is not shoot_last:
+                if shoot == 1:
+                    shoot_state = 1
+                elif shoot == 2:
+                    shoot_state = 2
+                shoot_last = shoot	
+            print ('recv=' + str(split_state))
+
+        
+       
+except KeyboardInterrupt:
+    pass
+finally:
+    s.close()
+    pwmswitch.stop()
+    pwmsplit.stop()
+    pwmshoot.stop()
+    pwmrelease.stop()
+ 
+    G.cleanup()
